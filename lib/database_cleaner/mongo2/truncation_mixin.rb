@@ -26,10 +26,14 @@ module DatabaseCleaner
           database.use(db)
         end
 
-        database['system.namespaces'].find(:name => { '$not' => /\.system\.|\$/ }).to_a.map do |collection|
-          _, name = collection['name'].split('.', 2)
-          name
+        def session
+          ::Mongoid.default_client
         end
+
+        session.command(listCollections: 1).first[:cursor][:firstBatch].map do |collection|
+          collection[:name]
+        end
+
       end
 
     end
