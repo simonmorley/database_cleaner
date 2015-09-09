@@ -6,7 +6,7 @@ module DatabaseCleaner
         if @only
           collections.each { |c| database[c].find.delete_many if @only.include?(c) }
         else
-          collections.each { |c| database[c].find.delete_many unless @tables_to_exclude.include?(c) }
+          collections.each { |c| database[c].find.delete_many unless (@tables_to_exclude.include?(c) || c == 'system' )}
         end
         true
       end
