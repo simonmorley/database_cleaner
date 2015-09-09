@@ -21,17 +21,28 @@ module DatabaseCleaner
         end
       end
 
+      def session
+        ::Mongoid.default_client
+      end
+
+      def version
+        @version ||= session.command('buildinfo' => 1).first[:version]
+      end
+
       def collections
         if db != :default
           database.use(db)
         end
 
-        def session
-          ::Mongoid.default_client
-        end
-
-        session.command(listCollections: 1).first[:cursor][:firstBatch].map do |collection|
-          collection[:name]
+        if version.split('.').first.to_i >= 3
+          session.command(listCollections: 1, :name => { '$not' => /\.system\.|\$/ }).first[:cursor][:firstBatch].map do |collection|
+            collection[:name]
+          end
+        else
+          session['system.namespaces'].find(name: { '$not' => /\.system\.|\$/ }).to_a.map do |collection|
+            _, name = collection['name'].split('.', 2)
+            name
+          end
         end
 
       end
